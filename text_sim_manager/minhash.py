@@ -13,22 +13,10 @@ import pandas as pd
 import itertools
 from sklearn.feature_extraction.text import CountVectorizer
 from datasets import Dataset,DatasetDict
-from nltk import tokenize
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 
 
-def run():
-    with open("/Users/samguercho/Projects/Paraphrasing/data/test/test.src", 'r') as f:
-        texts = tokenize.sent_tokenize(f.read())
-        for i in range(6):
-            texts.extend(texts[:(len(texts)//2)])
-        start = time.time()
-        minhash = MinHash()
-        sig, indexed_texts= minhash.fit_transform(texts)
-        minhash.compare_hashes(sig, indexed_texts)
-        timedelta = time.time() - start
-        print(f'The total time to produce the df is {time.strftime("%H:%M:%S", time.gmtime(timedelta))} seconds')
 
 class MinHash:
     """
@@ -36,9 +24,9 @@ class MinHash:
     Explaination of the algorithm in the following: https://en.wikipedia.org/wiki/MinHash
     This version is the LSH : https://en.wikipedia.org/wiki/Locality-sensitive_hashing
 
-    2 Main funcitons to use:
-    - compare_lsh_sigs: To compare LSH signatures between 2 texts
-    - fit_predict: To create LSH pairs in a given corpus
+    2 Main functions to use:
+    - compare_hashes: To compare LSH signatures between 2 texts
+    - fit_transform: To create LSH pairs in a given corpus
     """
     def __init__(self,
                  n_hash_functions: int=20,
@@ -96,6 +84,12 @@ class MinHash:
             f" reshape_lists_into_vectors - Invalid value. Allowed values are: column (-1, 1) or rows (1, -1)")
 
     def _vectorize(self, texts):
+        """
+        Call CountVectorizer object to vectorize each triplet of the texts
+        :return:
+            indexed_texts: text with a mapping [(index, text)]
+            vectors: vectorized texts (numpy)
+        """
         self.cv.fit(texts)
         vectors = self.cv.transform(texts).tolil().rows
         vectors_mask = (np.vectorize(len)(vectors) > 0)
@@ -105,6 +99,10 @@ class MinHash:
         return indexed_texts, vectors
 
     def _create_minhash(self, row):
+        """
+        Creates the hashes from the vectorized texts
+        :return: minhash matrix of size (num_texts, n_hashes)
+        """
         A = self._lists_to_vector(self._a, 'column')
         X = self._lists_to_vector(row, 'row')
         B = self._lists_to_vector(self._b, 'column')
@@ -125,6 +123,10 @@ class MinHash:
         return np.array(signatures).T, indexed_texts
 
     def _find_similar_index_values(self, vector):
+        """
+        Creates as many couples of indexes sharing the same values
+        :return: matrix of matching indexes of shape (num_combinations, 2)
+        """
         vec = np.concatenate((vector.reshape(-1, 1), np.arange(vector.shape[0]).reshape(-1, 1)), axis=1)
         res = vec[vec[:, 0].argsort(kind='mergesort')]
         result = []
@@ -146,23 +148,28 @@ class MinHash:
 
         result = np.concatenate(result)
 
-        # return vals, res
         return result
 
     def _map_texts(self, counts, indexed_texts):
+        """
+        Use indexed_texts to map the indexes to their original text
+        :param counts: [(index_1, index_2, pseudo_jaccard_similarity), ...]
+        :param indexed_texts: [(index, text), ...]
+        :return: a DataFrame of matching texts and their hash
+        """
         df = pd.DataFrame(counts[:, :3], columns=['index_1', 'index_2', 'sim_hash'])
         df['text_1'] = df.index_1.map(dict(indexed_texts))
         df['text_2'] = df.index_2.map(dict(indexed_texts))
         return df
 
-    def compare_hashes(self, signature_1, indexed_texts):
+    def compare_hashes(self, signatures, indexed_texts):
         """
-        Provided 2 signatures, we want to compare which have similarity, and if yes, on how many hashes
+        Provided a matrix of minhash signatures, compute pseudo-jaccard similarity
         :return:
         """
         matching_combinations = []
         for i in range(self.n_hashes):
-            X1 = signature_1[i]
+            X1 = signatures[i]
             matching_combinations.extend(self._find_similar_index_values(X1))
 
         all_combinations = np.array(matching_combinations)
