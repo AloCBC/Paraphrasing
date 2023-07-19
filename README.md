@@ -29,7 +29,7 @@ To know more about LSH, I found this article very clear: https://www.pinecone.io
 
 The principle is always the following: We would like a hash which, instead of avoiding collision like ShA-2, has a chance to collide only texts in a close distance to each other.
 
-![image](https://github.com/SamGuercho/Paraphrasing/assets/57171996/b178522d-4291-4d9f-b45b-e57993e7b910)
+<img src="https://github.com/SamGuercho/Paraphrasing/assets/57171996/b178522d-4291-4d9f-b45b-e57993e7b910" width="600" height="300">
 
 Among the alorithm, I decided to develop the MinHash algorithm in a way that would allow to do the following:
 - For a certain number of hash functions, always keep the same seeds for hashing
