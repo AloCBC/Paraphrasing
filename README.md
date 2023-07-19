@@ -23,7 +23,18 @@ It will be done in the Text Similarity Manager project.
 As of now, the following tools are being put to disposal:
 - Similarity Manager
 
-# Text Similarity Manager
-The idea behind this project is to be able to compare a large amount of texts (>10k) and give a similarity score to all of them in less than 10 min.
-For this, I developped a package based on the MinHash Algorithm.
-To know more about minhashing and LSH, I found this article very clear: https://www.pinecone.io/learn/series/faiss/locality-sensitive-hashing/
+# Text Similarity Manager - LSH MinHash Algorithm
+If you want to compare a large amount of texts (>10k) in a fast enough time, the LSH algorithms can be the way.
+To know more about LSH, I found this article very clear: https://www.pinecone.io/learn/series/faiss/locality-sensitive-hashing/
+
+The principle is always the following: We would like a hash which, instead of avoiding collision like ShA-2, has a chance to collide only texts in a close distance to each other.
+
+![image](https://github.com/SamGuercho/Paraphrasing/assets/57171996/b178522d-4291-4d9f-b45b-e57993e7b910)
+
+Among the alorithm, I decided to develop the MinHash algorithm in a way that would allow to do the following:
+- For a certain number of hash functions, always keep the same seeds for hashing
+- Flexible enough to add new use cases. ex: do we want to apply on all the texts as standalone, or to compare to older texts?
+- Enrich little by little the inputs to hash: triplets of characters, tokens, ascii characters...
+
+You can find the package in the file text_sim_manager.
+
