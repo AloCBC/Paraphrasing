@@ -38,3 +38,29 @@ Among the alorithm, I decided to develop the MinHash algorithm in a way that wou
 
 You can find the package in the file text_sim_manager.
 
+## How to use the MinHash package
+
+Import your texts as a list of texts:
+
+    from nltk import tokenize
+    with open("path/to/your/text", 'r') as f:
+        texts = tokenize.sent_tokenize(f.read())
+
+Then run the following:
+
+    from text_sim_manager.minhash import MinHash
+    import time
+    
+    start = time.time()
+    
+    minhash = MinHash()
+    signatures, indexed_texts = minhash.fit_transform(texts)
+    minhash.compare_hashes(signatures, indexed_texts)
+    
+    timedelta = time.time() - start
+    print(f'Estimated time to compare {len(texts)}: {time.strftime("%H:%M:%S", time.gmtime(timedelta))}.
+
+Your output is a dataframe having this format:
+<img width="846" alt="image" src="https://github.com/SamGuercho/Paraphrasing/assets/57171996/ae296ce1-c275-41fd-a441-256c1827afba">
+
+Where the indexes correspond to the apparition of each text in the list of texts.
